@@ -1,0 +1,36 @@
+# Xcode
+*.xcuserstate
+*.xcscmblueprint
+xcuserdata/
+DerivedData/
+*.moved-aside
+*.xccheckout
+*.xcworkspace
+!default.xcworkspace
+
+# Build artifacts
+build/
+*.app
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Temporary files
+*.swp
+*~
