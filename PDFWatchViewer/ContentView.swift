@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var showingDocumentPicker = false
     @State private var showingAlert = false
     @State private var alertMessage = ""
+    @State private var sendToWatchAfterPicking = true
 
     var body: some View {
         NavigationStack {
@@ -45,7 +46,11 @@ struct ContentView: View {
                 }
             }
             .sheet(isPresented: $showingDocumentPicker) {
-                DocumentPicker(pdfManager: pdfManager)
+                DocumentPicker(pdfManager: pdfManager, sendToWatch: sendToWatchAfterPicking) { newDocuments in
+                    if sendToWatchAfterPicking && !newDocuments.isEmpty {
+                        sendDocumentsToWatch(newDocuments)
+                    }
+                }
             }
             .alert("Status", isPresented: $showingAlert) {
                 Button("OK", role: .cancel) {}
@@ -54,7 +59,10 @@ struct ContentView: View {
             }
             .overlay {
                 if connectivityManager.isTransferring {
-                    TransferProgressView(progress: connectivityManager.transferProgress)
+                    TransferProgressView(
+                        progress: connectivityManager.transferProgress,
+                        status: connectivityManager.transferStatus
+                    )
                 }
             }
         }
@@ -67,12 +75,6 @@ struct ContentView: View {
     }
 
     private func sendToWatch(_ document: PDFDocumentItem) {
-        guard connectivityManager.isReachable else {
-            alertMessage = "Apple Watch is not reachable"
-            showingAlert = true
-            return
-        }
-
         connectivityManager.sendPDF(document) { success in
             DispatchQueue.main.async {
                 alertMessage = success ? "PDF sent to Watch!" : "Failed to send PDF"
@@ -82,15 +84,23 @@ struct ContentView: View {
     }
 
     private func sendAllToWatch() {
-        guard connectivityManager.isReachable else {
-            alertMessage = "Apple Watch is not reachable"
-            showingAlert = true
-            return
-        }
-
         connectivityManager.sendAllPDFs(pdfManager.documents) { success in
             DispatchQueue.main.async {
                 alertMessage = success ? "All PDFs sent to Watch!" : "Failed to send some PDFs"
+                showingAlert = true
+            }
+        }
+    }
+
+    private func sendDocumentsToWatch(_ documents: [PDFDocumentItem]) {
+        connectivityManager.sendAllPDFs(documents) { success in
+            DispatchQueue.main.async {
+                let count = documents.count
+                if success {
+                    alertMessage = count == 1 ? "PDF sent to Watch!" : "\(count) PDFs sent to Watch!"
+                } else {
+                    alertMessage = "Failed to send some PDFs"
+                }
                 showingAlert = true
             }
         }
@@ -129,6 +139,7 @@ struct PDFDocumentRow: View {
 
 struct TransferProgressView: View {
     let progress: Double
+    let status: String
 
     var body: some View {
         VStack(spacing: 16) {
@@ -136,7 +147,7 @@ struct TransferProgressView: View {
                 .progressViewStyle(.linear)
                 .frame(width: 200)
 
-            Text("Sending to Watch...")
+            Text(status.isEmpty ? "Sending to Watch..." : status)
                 .font(.headline)
 
             Text("\(Int(progress * 100))%")
@@ -151,6 +162,8 @@ struct TransferProgressView: View {
 
 struct DocumentPicker: UIViewControllerRepresentable {
     let pdfManager: PDFDocumentManager
+    let sendToWatch: Bool
+    let onDocumentsPicked: ([PDFDocumentItem]) -> Void
 
     func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: [UTType.pdf], asCopy: true)
@@ -162,20 +175,26 @@ struct DocumentPicker: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: UIDocumentPickerViewController, context: Context) {}
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(pdfManager: pdfManager)
+        Coordinator(pdfManager: pdfManager, onDocumentsPicked: onDocumentsPicked)
     }
 
     class Coordinator: NSObject, UIDocumentPickerDelegate {
         let pdfManager: PDFDocumentManager
+        let onDocumentsPicked: ([PDFDocumentItem]) -> Void
 
-        init(pdfManager: PDFDocumentManager) {
+        init(pdfManager: PDFDocumentManager, onDocumentsPicked: @escaping ([PDFDocumentItem]) -> Void) {
             self.pdfManager = pdfManager
+            self.onDocumentsPicked = onDocumentsPicked
         }
 
         func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+            var addedDocuments: [PDFDocumentItem] = []
             for url in urls {
-                pdfManager.addDocument(from: url)
+                if let doc = pdfManager.addDocument(from: url) {
+                    addedDocuments.append(doc)
+                }
             }
+            onDocumentsPicked(addedDocuments)
         }
     }
 }

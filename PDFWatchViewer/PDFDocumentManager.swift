@@ -31,8 +31,9 @@ class PDFDocumentManager: ObservableObject {
         loadDocuments()
     }
 
-    func addDocument(from url: URL) {
-        guard let pdfDocument = PDFDocument(url: url) else { return }
+    @discardableResult
+    func addDocument(from url: URL) -> PDFDocumentItem? {
+        guard let pdfDocument = PDFDocument(url: url) else { return nil }
 
         let fileName = "\(UUID().uuidString).pdf"
         let destinationURL = Self.documentsDirectory.appendingPathComponent(fileName)
@@ -51,8 +52,11 @@ class PDFDocumentManager: ObservableObject {
                 self.documents.append(item)
                 self.saveDocuments()
             }
+
+            return item
         } catch {
             print("Error copying PDF: \(error)")
+            return nil
         }
     }
 
