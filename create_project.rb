@@ -59,9 +59,8 @@ watch_group.new_file('Info.plist')
 ios_target.build_configurations.each do |config|
   config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.pdfwatchviewer.ios'
   config.build_settings['INFOPLIST_FILE'] = 'PDFWatchViewer/Info.plist'
-  config.build_settings['CODE_SIGN_STYLE'] = 'Manual'
-  config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
-  config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+  config.build_settings['CODE_SIGN_STYLE'] = 'Automatic'
+  config.build_settings['CODE_SIGN_IDENTITY'] = 'Apple Development'
   config.build_settings['SWIFT_VERSION'] = '5.0'
   config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
   config.build_settings['TARGETED_DEVICE_FAMILY'] = '1,2'
@@ -77,9 +76,8 @@ end
 watch_target.build_configurations.each do |config|
   config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.pdfwatchviewer.ios.watchkitapp'
   config.build_settings['INFOPLIST_FILE'] = 'PDFWatchViewer Watch App/Info.plist'
-  config.build_settings['CODE_SIGN_STYLE'] = 'Manual'
-  config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
-  config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+  config.build_settings['CODE_SIGN_STYLE'] = 'Automatic'
+  config.build_settings['CODE_SIGN_IDENTITY'] = 'Apple Development'
   config.build_settings['SWIFT_VERSION'] = '5.0'
   config.build_settings['WATCHOS_DEPLOYMENT_TARGET'] = '10.0'
   config.build_settings['SDKROOT'] = 'watchos'
